@@ -555,6 +555,7 @@ function! s:tags_sink(lines)
   normal! zz
 endfunction
 
+" overridden to use ag to limit query first
 function! fzf#vim#tags(query, ...)
   if empty(tagfiles())
     call s:warn('Preparing tags')
@@ -565,20 +566,15 @@ function! fzf#vim#tags(query, ...)
   endif
 
   let tagfile = tagfiles()[0]
-  " We don't want to apply --ansi option when tags file is large as it makes
-  " processing much slower.
-  if getfsize(tagfile) > 1024 * 1024 * 20
-    let proc = 'grep -v ''^\!'' '
-    let copt = ''
-  else
-    let proc = 'perl -ne ''unless (/^\!/) { s/^(.*?)\t(.*?)\t/\x1b[33m\1\x1b[m\t\x1b[34m\2\x1b[m\t/; print }'' '
-    let copt = '--ansi '
-  endif
+
+  " modified here to pipe grep to ag
+  let proc = 'grep -v ''^\!'' '.shellescape(fnamemodify(tagfile, ':t')).' | ag --no-numbers -s '.'"^'.substitute(a:query, "\\$", "", "").'\b"'
+
   return s:fzf(fzf#vim#wrap({
-  \ 'source':  proc.shellescape(fnamemodify(tagfile, ':t')),
+  \ 'source':  proc,
   \ 'sink*':   s:function('s:tags_sink'),
   \ 'dir':     fnamemodify(tagfile, ':h'),
-  \ 'options': copt.'-m --tiebreak=begin --prompt "Tags> "'.s:q(a:query)}), a:000)
+  \ 'options': '-m --tiebreak=begin --prompt "Tags> "'.s:q(a:query)}), a:000)
 endfunction
 
 " ------------------------------------------------------------------
