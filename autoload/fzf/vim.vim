@@ -568,7 +568,7 @@ function! fzf#vim#tags(query, ...)
   let tagfile = tagfiles()[0]
 
   " modified here to pipe grep to ag
-  let proc = 'grep -v ''^\!'' '.shellescape(fnamemodify(tagfile, ':t')).' | ag --no-numbers -s '.'"^'.substitute(a:query, "\\$", "", "").'\b"'
+  let proc = 'grep -v ''^\!'' '.shellescape(fnamemodify(tagfile, ':t')).' | ag --no-numbers -s '.'''^'.substitute(a:query, "\\$", "", "").'\b'''
 
   return s:fzf(fzf#vim#wrap({
   \ 'source':  proc,
